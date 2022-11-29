@@ -6,9 +6,9 @@ Allows you to store variables and objects quickly and easily, inspired by the "s
 
 To save two variables `a` and `b`, first, writing the following wrapper is advisable:
 ```
-import quickle
+from quickle import qsave
 
-save = lambda filename, *args: quickle.save(globals(), locals(), filename, *args)
+save = lambda filename, *args: qsave(globals(), locals(), filename, *args)
 ```
 
 Then use `save` exactly as used in MATLAB, except replacing he `.mat` file extension with `.pkl`, e.g.:
@@ -16,31 +16,20 @@ Then use `save` exactly as used in MATLAB, except replacing he `.mat` file exten
 a = 1
 b = [1, 2, 3]
 
-save('save_name.pkl', 'a', 'b')
+save('save_name.pkl', 'a', 'b', nocompression=False)
 ```
-This pickles the variables/objects in `save_name.pkl`.
+This pickles the variables/objects in `save_name.pkl`. The keyword argument `nocompression` (default `False`) will disable BZ2 file compression if `True`.
 
 
-To load the objects into the workspace, there are two options. First is to create a wrapper for `implicit_load()`:
-```
-load = lambda filename, *args: quickle.implicit_load(locals(), filename, *args)
-```
+The method to load saved objects is different to MATLAB, as the called objects have to be explicitly assigned to variables. But, otherwise the process is the same; provide the file name and the names of the objects to be loaded:
 
-This can be used exactly as in MATLAB, but with `.pkl`:
 ```
-load('save_name.pkl', 'a', 'b')
-
-print(a, b)
-```
-However, although this works in practice, your editor may dislike that the loaded variables haven't been explicitly defined, and you will see a 'variable undefined' error.  
-
-In solution to this, you can use `explicit_load`, which, explicitly assigns the loaded objects to names:
-```
-load = lambda filename, *args: quickle.explicit_load(filename, *args)
+from quickle import load
 
 a, b = load('save_name.pkl', 'a', 'b')
 ```
-This is dissimilar to the MATLAB function, but doesn't throw the 'undefined variable' error.
+
+The file will automatically be decompressed if required.
 
 Congrats, you've just quickled some objects!
 

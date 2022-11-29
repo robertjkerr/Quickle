@@ -1,46 +1,51 @@
-import pickle
+import pickle as _pickle
+import bz2 as _bz2
 
 #Finds the variable associated with a variable name
-def get_obj(globals, locals, arg):
+def _get_obj(globals, locals, arg):
     try:
         try:
             obj = locals[arg]
         except:
             obj = globals[arg]
-        return obj
+            return obj
     except:
         print('Invalid variable name entered:', arg)
         raise ValueError
 
 #Pickles objects
-def save(globals, locals, filename, *args):
-    get = lambda arg: get_obj(globals, locals, arg)
-    objs = tuple(map(get, args))
+def qsave(globals, locals, filename, *args, **kwargs):
+    objs = (_get_obj(globals, locals, arg) for arg in args)
     objs_dict = dict(zip(args, objs))
-    file = open(filename, 'wb')
-    pickle.dump(objs_dict,file)
-    file.close()
+
+    try:
+        nocompress = kwargs['nocompression']
+
+        if not isinstance(nocompress, bool):
+            print("'nocompression' keyword argument must be a boolean")
+            raise TypeError
+    except:
+        nocompress = False
+
+    if nocompress:
+        with open(filename, 'wb') as file:
+            _pickle.dump(objs_dict, file)
+    else:
+        with _bz2.BZ2File(filename, 'wb') as file:
+            _pickle.dump(objs_dict, file)
 
 #Loads objects from file and unpickles them        
-def _load(filename, *args):
-    file = open(filename, 'rb')
-    objs = pickle.load(file)
-    file.close()
-    get_obj = lambda arg: objs[arg]
-    objs_tuple = tuple(map(get_obj, args))
-    return objs_tuple
+def load(filename, *args):
+    try:
+        with open(filename, 'rb') as file:
+            objs = _pickle.load(file)
+    except:
+        with _bz2.BZ2File(filename, 'rb') as file:
+            objs = _pickle.load(file)
 
-#Loads objects directly into locals
-def implicit_load(locals, filename, *args):
-    objs_tuple = _load(filename, *args)
-    for i in range(len(args)):
-        locals[args[i]] = objs_tuple[i]
+    objs_tuple = tuple([objs[arg] for arg in args])
 
-#Returns an object or tuple of unpickled object
-def explicit_load(filename, *args):
-    objs_tuple = _load(filename, *args)
     if len(objs_tuple) > 1:
         return objs_tuple
     else:
         return objs_tuple[0]
-
